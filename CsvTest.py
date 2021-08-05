@@ -26,10 +26,9 @@ def copy_pasta(path_to):
     #Новый dataframe
     df_new = data[fatRate & muscleRate]
 
-    ws = sht1.worksheet('Test2')
-    set_with_dataframe(ws,df_new, include_column_header=True)
+    ws = sht1.worksheet('Weight_Musclerate')
 
-    #Добавляем в лист так как в исходном листе нет, так как в csv изначанольном - нет
+    #Добавляем в лист так как в исходном листе нет, так как в csv изначальном - нет
     list_.append('Muscle percentage')
     # Считываем исходный dataframe с гугла
     df_old = get_as_dataframe(ws, parse_dates=True)
@@ -57,4 +56,4 @@ def read_csv():
 
 for i in read_csv():
     copy_pasta(i)
-    #os.remove(i)
+    os.remove(i)
