@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import time,pandas,os, re
+import time,pandas,os, re,shutil
 import gspread
 from gspread_dataframe import get_as_dataframe, set_with_dataframe
 
@@ -49,11 +49,25 @@ def read_csv():
         # del dirs[:]  # go only one level deep
         for i in files:
             if re.search(regex_csv, str(i)):
-                filtered_csv.append(str(root).replace('\\', '/') + "/" + str(i))
+                path = str(root).replace('\\', '/') + "/" + str(i)
+                os.chmod(path, 0o777)
+                filtered_csv.append(path)
     return filtered_csv
 
 
-
 for i in read_csv():
+    print('Записываю ' + i)
     copy_pasta(i)
-    os.remove(i)
+    path = i.split("/")
+    path_join = '/'.join([path[0], path[1], path[2]])
+    path_zip = path_join + '.zip'
+    if os.path.isfile(path_zip):
+        print('Удаляю zip: '+path_zip)
+        os.remove(path_zip)
+    if len(path) == 3:
+        if os.path.isfile(path_join):
+            print('Удаляю: ' + path_join)
+            os.remove(path_join)
+    else:
+        print('Удаляю: ' + path_join)
+        shutil.rmtree(path_join)
