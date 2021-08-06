@@ -65,7 +65,7 @@ for i in read_csv():
         print('Удаляю zip: '+path_zip)
         os.remove(path_zip)
     if len(path) == 3:
-        # Если это файл
+        # Проверяем если это файл
         if os.path.isfile(path_join):
             print('Удаляю: ' + path_join)
             os.remove(path_join)
