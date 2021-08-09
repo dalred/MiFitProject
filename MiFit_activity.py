@@ -10,7 +10,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 
 
 gc = gspread.service_account(filename='C:/Users/dalre/PycharmProjects/csvproject/pythontableproject.json')
-sht1 = gc.open_by_key('1igyXb2kspw0TCiUoNS9D4ZCmowRZ01RZIKRuhxC4iWQ')
+sht1 = gc.open_by_key('')
 
 def path_to_csv(folder_url, regex_csv):
     filtered_csv = []
