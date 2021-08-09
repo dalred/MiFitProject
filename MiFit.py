@@ -14,28 +14,20 @@ sht1 = gc.open_by_key('')
 
 def copy_pasta(path_to):
     list_ = ['timestamp', 'weight', 'fatRate', 'muscleRate']
-
     def date_parser(string_list):
         return [time.ctime(float(x)) for x in string_list]
     #Cчитываем csv
     data = pandas.read_csv(path_to, parse_dates=[0], sep=',', date_parser=date_parser)[list_]
     fatRate = data['fatRate'] > 0
     muscleRate = data['muscleRate'] > 0
-    data['Muscle percentage']= data['muscleRate']/data['weight']
+    # Добавляем еще колонку (Column)
+    data['Muscle percentage'] = data['muscleRate']/data['weight']
 
-    #Новый dataframe
-    df_new = data[fatRate & muscleRate]
-
+    #Берем только те значения кто больше 0, на всякий случай.
+    data = data[fatRate & muscleRate]
     ws = sht1.worksheet('Weight_Musclerate')
-
-    #Добавляем в лист так как в исходном листе нет, так как в csv изначанольном - нет
-    list_.append('Muscle percentage')
-    # Считываем исходный dataframe с гугла
-    df_old = get_as_dataframe(ws, parse_dates=True)
-    existing = df_old[list_].dropna(how='all')
-    #Складываем вместе dataframe старый и новый
-    updated = existing.append(df_new)
-    set_with_dataframe(ws,updated)
+    max_rows = len(ws.get_all_values())
+    set_with_dataframe(ws, data, row=max_rows+1, col=1, include_column_header=False)
 
     ws.format('A2:A', {'numberFormat': {'type': 'DATE','pattern': 'dd.MM.yyyy'}})
     ws.format('B2:D', {'numberFormat': {'type': 'NUMBER','pattern': '0.00'}})
@@ -43,7 +35,7 @@ def copy_pasta(path_to):
     ws.format('A2:E',{"horizontalAlignment": 'CENTER','textFormat': {'fontSize': '10'}})
 
 
-def read_csv():
+def path_to_csv():
     filtered_csv = []
     for root, dirs, files in os.walk(folder_url):
         # del dirs[:]  # go only one level deep
@@ -54,22 +46,24 @@ def read_csv():
                 filtered_csv.append(path)
     return filtered_csv
 
-
-for i in read_csv():
-    print('Записываю ' + i)
-    copy_pasta(i)
-    path = i.split("/")
-    path_join = '/'.join([path[0], path[1], path[2]])
-    path_zip = path_join + '.zip'
-    if os.path.isfile(path_zip):
-        print('Удаляю zip: '+path_zip)
-        os.remove(path_zip)
-    if len(path) == 3:
-        # Проверяем если это файл
-        if os.path.isfile(path_join):
+if len(path_to_csv()) > 0:
+    for i in path_to_csv():
+        print('Записываю ' + i)
+        copy_pasta(i)
+        path = i.split("/")
+        path_join = '/'.join([path[0], path[1], path[2]])
+        path_zip = path_join + '.zip'
+        if os.path.isfile(path_zip):
+            print('Удаляю zip: '+path_zip)
+            os.remove(path_zip)
+        if len(path) == 3:
+            # Проверяем если это файл
+            if os.path.isfile(path_join):
+                print('Удаляю: ' + path_join)
+                os.remove(path_join)
+        else:
+            # Если это папка
             print('Удаляю: ' + path_join)
-            os.remove(path_join)
-    else:
-        # Если это папка
-        print('Удаляю: ' + path_join)
-        shutil.rmtree(path_join)
+            shutil.rmtree(path_join)
+else:
+    print("Файлы отсутствуют!")
