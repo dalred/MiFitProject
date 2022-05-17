@@ -2,14 +2,23 @@
 import pandas,os, re,shutil
 import gspread
 from gspread_dataframe import set_with_dataframe,get_as_dataframe
+from dotenv import dotenv_values
+from datetime import datetime
 
-
+config = dotenv_values(".env")
 folder_url = "D:\Downloads"
 regex_csv = 'ACTIVITY_(?!STAGE|MINUTE).*\.csv$'
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
 gc = gspread.service_account(filename='C:/Users/dalre/PycharmProjects/csvproject/pythontableproject.json')
-sht1 = gc.open_by_key('')
+sht1 = gc.open_by_key(config.get('GC_KEY'))
+
+ws = sht1.worksheet('Activity')
+
+list_ = ['date', 'steps', 'calories']
+list_csv = ['date','datetimestamp',  'steps', 'distance', 'runDistance', 'calories']
+#custom_date_parser = lambda x: datetime.utcfromtimestamp(int(x)).strftime('%Y-%m-%d %H:%M:%S')
+custom_date_parser = lambda x: datetime.strptime(x, "%Y-%m-%d")
 
 def path_to_csv(folder_url, regex_csv):
     filtered_csv = []
@@ -33,7 +42,11 @@ def avg_weeks():
     set_with_dataframe(ws, df_old, row=2, col=4, include_column_header=False,include_index=True)
 
 def copy_pasta(path_to):
-    data = pandas.read_csv(path_to, parse_dates=[0], sep=',')[list_]
+    data = pandas.read_csv(path_to, sep=',', parse_dates=[0], date_parser=custom_date_parser, header=None, skiprows=1)
+    # Присваиваем новый header
+    data.columns = list_csv
+    # Забираем нужные колонки
+    data = data[list_]
     #Новый dataframe
     max_rows = len(ws.get_all_values())
     next_row = max_rows + 1

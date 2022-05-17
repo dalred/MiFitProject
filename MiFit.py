@@ -2,23 +2,31 @@
 import time, pandas, os, re, shutil
 import gspread
 from gspread_dataframe import set_with_dataframe
+from datetime import datetime
+from dotenv import dotenv_values
+import pytz
 
+config = dotenv_values(".env")
 folder_url = "D:\Downloads"
 regex_csv = 'BODY_.*\.csv$'
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
 gc = gspread.service_account(filename='C:/Users/dalre/PycharmProjects/csvproject/pythontableproject.json')
-sht1 = gc.open_by_key('')
-
+sht1 = gc.open_by_key(config.get('GC_KEY'))
+tz = pytz.timezone('Europe/Moscow')
 
 def copy_pasta(path_to):
-    list_ = ['timestamp', 'weight', 'fatRate', 'muscleRate']
+    list_csv = ['time', 'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism', 'muscleRate',
+                'visceralFat', 'unname']
+    list_ = ['time', 'weight', 'fatRate', 'muscleRate']
 
-    def date_parser(string_list):
-        return [time.ctime(float(x)) for x in string_list]
+    #custom_date_parser = lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S+0000")
+    custom_date_parser = lambda x: datetime.fromtimestamp(int(x), tz).strftime('%Y-%m-%d %H:%M:%S')
 
     # Cчитываем csv
-    data = pandas.read_csv(path_to, parse_dates=[0], sep=',', date_parser=date_parser)[list_]
+    data = pandas.read_csv(path_to, sep=',', parse_dates=[0], date_parser=custom_date_parser, header=None, skiprows=1)
+    data.columns = list_csv
+    data = data[list_]
     fatRate = data['fatRate'] > 0
     muscleRate = data['muscleRate'] > 0
     # Добавляем еще колонку (Column)
@@ -26,7 +34,7 @@ def copy_pasta(path_to):
     data['fatRate'] = data['fatRate'] / 100
     # Берем только те значения кто больше 0, на всякий случай.
     data = data[fatRate & muscleRate]
-    data = data.sort_values('timestamp')  # В CSV почему-то стало наоборот по убыванию
+    data = data.sort_values('time')  # В CSV почему-то стало наоборот по убыванию
     ws = sht1.worksheet('Weight_Musclerate')
     max_rows = len(ws.get_all_values())
     set_with_dataframe(ws, data, row=max_rows + 1, col=1, include_column_header=False)
