@@ -16,8 +16,10 @@ sht1 = gc.open_by_key(config.get('GC_KEY'))
 ws = sht1.worksheet('Activity')
 
 list_ = ['date', 'steps', 'calories']
-list_csv = ['date','datetimestamp',  'steps', 'distance', 'runDistance', 'calories']
-#custom_date_parser = lambda x: datetime.utcfromtimestamp(int(x)).strftime('%Y-%m-%d %H:%M:%S')
+# old
+# list_csv = ['date','datetimestamp',  'steps', 'distance', 'runDistance', 'calories']
+list_csv = ['date', 'steps', 'distance', 'runDistance', 'calories']
+# custom_date_parser = lambda x: datetime.utcfromtimestamp(int(x)).strftime('%Y-%m-%d %H:%M:%S')
 custom_date_parser = lambda x: datetime.strptime(x, "%Y-%m-%d")
 
 def path_to_csv(folder_url, regex_csv):
