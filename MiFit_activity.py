@@ -38,22 +38,28 @@ def path_to_csv(folder_url, regex_csv):
 
 
 def paste_empty_row(index: int, number_of_rows: int, worksheet) -> None:
-    empty_row = ['' for cell in range(worksheet.col_count)]
-    for row in range(number_of_rows):
-        # TODO Проверить insert_row с inherit_from_before
-        worksheet.insert_row(empty_row, index=index, value_input_option='RAW')
+    # worksheet.col_count - считает неверно ставим по умолчанию 3
+    # empty_row = ['' for cell in range(worksheet.col_count)]
+    empty_rows = [['']*3 for _ in range(number_of_rows)]
+    # TODO Проверить insert_row с inherit_from_before
+    # Не подходит под наш случай
+    # https://docs.gspread.org/en/latest/api/models/worksheet.html?highlight=append#gspread.worksheet.Worksheet.append_row
+    worksheet.insert_rows(empty_rows, row=index, value_input_option='RAW')
 
 
 def avg_weeks():
+    # Перезапись
     print('Cчитываю старый Dataframe c листа!')
     df_old = get_as_dataframe(ws1, parse_dates=True, usecols=[0, 1, 2])
+    # Удаление
     df_old = df_old[list_].dropna(how='all')
     df_old['dateAvg'] = pandas.to_datetime(df_old['date'], format="%d.%m.%Y")
     df_old = df_old.set_index('dateAvg')
     df_old = df_old.resample('W').mean()
     df_old = df_old.sort_values('dateAvg', ascending=False)
     set_with_dataframe(ws2, df_old, row=2, col=1, include_column_header=False, include_index=True)
-    format_table(worksheet=ws2)
+    # TODO Разобраться с типами
+    format_table(worksheet=ws2, number=len(df_old)+1)
 
 
 def copy_pasta(path_to):
@@ -64,21 +70,22 @@ def copy_pasta(path_to):
     data = data[list_]
     data = data.sort_values('date', ascending=False)
     # Новый dataframe
+    # Вставка пустых строк
     paste_empty_row(index=2, number_of_rows=len(data), worksheet=ws1)
     set_with_dataframe(ws1, data, row=2, col=1, include_column_header=False)
     format_table(worksheet=ws1)
 
 
-def format_table(worksheet):
-    worksheet.format('A2:A',
+def format_table(worksheet, number=''):
+    worksheet.format('A2:A'+str(number),
                      {'numberFormat':
                           {'type': 'DATE', 'pattern': 'dd.MM.yyyy'},
                       })
-    worksheet.format('B2:E',
+    worksheet.format('B2:E'+str(number),
                      {'numberFormat':
                           {'type': 'NUMBER', 'pattern': '0'}
                       })
-    worksheet.format('A2:C',
+    worksheet.format('A2:C'+str(number),
                      {
                          'horizontalAlignment': 'CENTER',
                          'textFormat': {'fontSize': '9'},

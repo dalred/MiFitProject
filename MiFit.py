@@ -15,13 +15,20 @@ gc = gspread.service_account(filename='C:/Users/dalre/PycharmProjects/csvproject
 sht1 = gc.open_by_key(config.get('GC_KEY'))
 tz = pytz.timezone('Europe/Moscow')
 
+def paste_empty_row(index: int, number_of_rows: int, worksheet) -> None:
+    # worksheet.col_count - считает неверно ставим по умолчанию 3
+    # empty_row = ['' for cell in range(worksheet.col_count)]
+    empty_rows = [['']*3 for _ in range(number_of_rows)]
+    # row Start row to update (one-based). Defaults to 1 (one).
+    worksheet.insert_rows(empty_rows, row=index, value_input_option='RAW')
+
 def copy_pasta(path_to):
     list_csv = ['time', 'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism', 'muscleRate',
-                'visceralFat', 'unname']
+                'visceralFat']
     list_ = ['time', 'weight', 'fatRate', 'muscleRate']
 
-    #custom_date_parser = lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S+0000")
-    custom_date_parser = lambda x: datetime.fromtimestamp(int(x), tz).strftime('%Y-%m-%d %H:%M:%S')
+    custom_date_parser = lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S+0000")
+    #custom_date_parser = lambda x: datetime.fromtimestamp(int(x), tz).strftime('%Y-%m-%d %H:%M:%S')
 
     # Cчитываем csv
     data = pandas.read_csv(path_to, sep=',', parse_dates=[0], date_parser=custom_date_parser, header=None, skiprows=1)
@@ -34,11 +41,10 @@ def copy_pasta(path_to):
     data['fatRate'] = data['fatRate'] / 100
     # Берем только те значения кто больше 0, на всякий случай.
     data = data[fatRate & muscleRate]
-    data = data.sort_values('time')  # В CSV почему-то стало наоборот по убыванию
+    data = data.sort_values('time', ascending=False)
     ws = sht1.worksheet('Weight_Musclerate')
-    max_rows = len(ws.get_all_values())
-    set_with_dataframe(ws, data, row=max_rows + 1, col=1, include_column_header=False)
-
+    paste_empty_row(index=2, number_of_rows=len(data), worksheet=ws)
+    set_with_dataframe(ws, data, row=2, col=1, include_column_header=False)
     ws.format('A2:A', {'numberFormat': {'type': 'DATE', 'pattern': 'dd.MM.yyyy'}})
     ws.format('B2:B', {'numberFormat': {'type': 'NUMBER', 'pattern': '0.00'}})
     ws.format('C2:C', {'numberFormat': {'type': 'PERCENT', 'pattern': '00.00%'}})
